@@ -5,20 +5,32 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import yaml
 import numpy as np
 import spotipy
+from unidecode import unidecode
 from spotipy.oauth2 import SpotifyClientCredentials
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
 
 
-Client_ID = "14e941e227d44c49a3be9349f1976632"
-Client_Secret = "3d20ff8d482f4477a499283081bc7e98"
+gender_csv1 = pd.read_csv('TOP_ARTIST_GENDER.csv')
+gender_csv2 = pd.read_csv('GENDER_DATASET_2.csv',low_memory=False)
 
+#Client ID and Client Secret found in the config.yaml file in gitignore
+
+with open("config.yaml", "r") as f:
+    config = yaml.safe_load(f)
+
+Client_ID = config['Client_ID']
+Client_Secret = config['Client_Secret']
 
 cid = Client_ID
 secret = Client_Secret
 client_credentials_manager = SpotifyClientCredentials(client_id=cid, client_secret=secret)
 sp = spotipy.Spotify(client_credentials_manager = client_credentials_manager)
+
+#Shrink down the Url to only its URI in order to be processed through the API
+#The characters after the 34th from the URL represent the URI of a playlist
 
 def url_to_uri (x):
     return x[34:].split('?',1)[0]
@@ -82,7 +94,6 @@ def no_from(x):
 
 # Add a seperate column for the first and second featuring artist
 
-from unidecode import unidecode
 
 def feat_column(x,type):
     x = str(x)
@@ -121,16 +132,12 @@ def add_featuring(df):
 
 
 # ---------------------------------------------------
-# Download the gender CSV and cross reference it with our dataframe on the common artist names
-
-
-gender_csv1 = pd.read_csv('top_artist_gender.csv')
+# Cross reference our gender CSV imports with our dataframe on the common artist names
 
 gender_csv1 = gender_csv1[['artist','gender']]
 gender_csv1['artist'] = gender_csv1['artist'].str.lower()
 gender_csv1['artist'] = gender_csv1['artist'].apply(unidecode)
 
-gender_csv2 = pd.read_csv('Gender_Dataset_2.csv',low_memory=False)
 gender_csv2 = gender_csv2[['name','gender']]
 columns_csv2 = ['artist','gender']
 gender_csv2.columns = columns_csv2
